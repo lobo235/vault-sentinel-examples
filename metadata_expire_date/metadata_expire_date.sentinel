@@ -1,0 +1,42 @@
+import "strings"
+
+# Function to identify if requestor has a policy that starts with a pattern
+policy_startswith = func(prefix) {
+    if length(auth.policies else 0) > 0 {
+        for auth.policies as policy {
+            if strings.has_prefix(policy, prefix) {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+# Function to check if only the "expire_date" field is being modified
+allowed_metadata_changes = func() {
+    # Check if custom_metadata field exists in the payload
+    if request.data contains "custom_metadata" {
+        # Iterate over keys in the custom_metadata map
+        for request.data.custom_metadata as key, val {
+            if key != "expire_date" {
+                return false
+            }
+        }
+    }
+
+    return true
+}
+
+
+
+# Only care about create, update, and delete operations against kv metadata paths made by users with policy starting with pol-usr*
+precond = rule {
+    request.operation in ["create", "update", "delete"] and
+    strings.has_prefix(request.path, "kv/metadata/") and
+    policy_startswith("pol-usr") is true
+}
+
+# Main policy evaluation
+main = rule when precond {
+    allowed_metadata_changes() is true
+}

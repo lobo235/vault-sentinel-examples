@@ -1,0 +1,76 @@
+import "strings"
+
+# Function to validate that a string matches values in a pre-determined list
+string_in_list = func(str, list) {
+    if length(str else 0) > 0 {
+        if length(list else 0) > 0 {
+            return list contains str
+        } else {
+            error("string_in_list argument \"list\" is empty or unset!")
+        }
+    } else {
+        error("string_in_list argument \"str\" is empty or unset!")
+    }
+    return false
+}
+
+# Function to validate that a string matches a Regular Expression
+string_matches_regex = func(str, regex) {
+    if length(str else 0) > 0 {
+        if length(regex else 0) > 0 {
+            return str matches regex
+        } else {
+            error("string_in_list argument \"list\" is empty or unset!")
+        }
+    } else {
+        error("string_matches_regex argument \"str\" is empty or unset!")
+    }
+    return false
+}
+
+custom_metadata_has_field = func(field) {
+    if request.data.custom_metadata is defined and length(request.data.custom_metadata else 0) > 0 {
+        for request.data.custom_metadata as key, val {
+            if key == field {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+validate_all = func() {
+    validated = true
+    if custom_metadata_has_field("type") {
+        validated = validated and string_in_list(request.data.custom_metadata.type, [ "db", "api key", "tls", "token", "jwt", "key" ])
+    }
+    if custom_metadata_has_field("privileged") {
+        validated = validated and string_in_list(request.data.custom_metadata.privileged, [ "yes", "no" ])
+    }
+    if custom_metadata_has_field("contact") {
+        validated = validated and string_matches_regex(request.data.custom_metadata.contact, "(\\W|^)[\\w.\\-]{0,25}@bmo\\.com(\\W|$)")
+    }
+    if custom_metadata_has_field("expiry_date") {
+        validated = validated and string_matches_regex(request.data.custom_metadata.expiry_date, "^(0[1-9]|1[1,2])(\\/|-)(0[1-9]|[12][0-9]|3[01])(\\/|-)(20|21|22)\\d{2}$")
+    }
+    if validated {
+        return true
+    } else {
+        print ("Custom Metadata validation failed. See http://wiki.bmo.net/custom_metadata_article for more details.")
+        return false
+    }
+}
+
+validation_result = validate_all()
+
+# Only care about create, update, and delete operations against kv metadata paths made by users with policy starting with pol-usr*
+precond = rule {
+    request.operation in ["create", "update", "delete"] and
+    strings.has_prefix(request.path, "kv/metadata/") and
+    request.data.custom_metadata is defined
+}
+
+# Main policy evaluation
+main = rule when precond {
+    validation_result is true
+}

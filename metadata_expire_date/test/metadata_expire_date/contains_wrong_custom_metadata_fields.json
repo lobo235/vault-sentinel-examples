@@ -1,0 +1,65 @@
+{
+  "global": {
+    "time": "2023-10-26T20:17:49.195906478Z",
+    "type": "response",
+    "auth": {
+      "client_token": "hmac-sha256:5ace6cd6ef1d6e13d1b3bd290c253dd7b0ecc2d365e4fb40603a9bb5537e6c02",
+      "accessor": "hmac-sha256:ecfe0a98ba0bf382eae9a13d4fe77383663b010d8699ea2837b1b8f79ae9a457",
+      "display_name": "root",
+      "policies": [
+        "default",
+	      "pol-usr-blueteam"
+      ],
+      "token_policies": [
+        "root"
+      ],
+      "policy_results": {
+        "allowed": true,
+        "granting_policies": [
+          {
+            "name": "root",
+            "namespace_id": "root",
+            "type": "acl"
+          }
+        ]
+      },
+      "token_type": "service",
+      "token_issue_time": "2023-10-26T09:31:01-06:00"
+    },
+    "request": {
+      "id": "440d57a0-693b-88d1-c809-359838729bfb",
+      "client_id": "0DHqvq2D77kL2/JTPSZkTMJbkFVmUu0TzMi0jiXcFy8=",
+      "operation": "update",
+      "mount_point": "kv/",
+      "mount_type": "kv",
+      "mount_accessor": "kv_72547455",
+      "mount_running_version": "v0.16.1+builtin",
+      "mount_class": "secret",
+      "client_token": "hmac-sha256:5ace6cd6ef1d6e13d1b3bd290c253dd7b0ecc2d365e4fb40603a9bb5537e6c02",
+      "client_token_accessor": "hmac-sha256:ecfe0a98ba0bf382eae9a13d4fe77383663b010d8699ea2837b1b8f79ae9a457",
+      "namespace": {
+        "id": "root"
+      },
+      "path": "kv/metadata/1234/redteam/tls_cert1",
+      "data": {
+        "custom_metadata": {
+          "expire_date": "hmac-sha256:62575bb7b80f7d929d222ff2726351c7ebc03760486c7e388ad8568420932ee6",
+	        "cert_type": "x509"
+        }
+      },
+      "remote_address": "127.0.0.1",
+      "remote_port": 38452
+    },
+    "response": {
+      "mount_point": "kv/",
+      "mount_type": "kv",
+      "mount_accessor": "kv_72547455",
+      "mount_running_plugin_version": "v0.16.1+builtin",
+      "mount_class": "secret"
+    }
+  },
+  "test": {
+    "precond": true,
+    "main": false
+  }
+}
