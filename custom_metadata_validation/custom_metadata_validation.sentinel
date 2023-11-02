@@ -1,10 +1,14 @@
 import "strings"
 
 # Function to validate that a string matches values in a pre-determined list
-string_in_list = func(str, list) {
+string_in_list = func(str, list, field_name) {
     if length(str else 0) > 0 {
         if length(list else 0) > 0 {
-            return list contains str
+            if list contains str {
+                return true
+            } else {
+                print("***** ", field_name, " validation failed because \"", str, "\" was not found in list: ", list, " *****")
+            }
         } else {
             error("string_in_list argument \"list\" is empty or unset!")
         }
@@ -15,10 +19,14 @@ string_in_list = func(str, list) {
 }
 
 # Function to validate that a string matches a Regular Expression
-string_matches_regex = func(str, regex) {
+string_matches_regex = func(str, regex, field_name) {
     if length(str else 0) > 0 {
         if length(regex else 0) > 0 {
-            return str matches regex
+            if str matches regex {
+                return true
+            } else {
+                print("***** ", field_name, " validation failed because \"", str, "\" does not match regex: ", regex, " *****")
+            }
         } else {
             error("string_in_list argument \"list\" is empty or unset!")
         }
@@ -30,7 +38,7 @@ string_matches_regex = func(str, regex) {
 
 # Function to check if a field exists in the custom_metadata collection
 custom_metadata_has_field = func(field) {
-    if request.data.custom_metadata is defined and length(request.data.custom_metadata else 0) > 0 {
+    if "custom_metadata" in keys(request.data) and length(request.data.custom_metadata else 0) > 0 {
         for request.data.custom_metadata as key, val {
             if key == field {
                 return true
@@ -44,16 +52,16 @@ custom_metadata_has_field = func(field) {
 validate_all = func() {
     validated = true
     if custom_metadata_has_field("type") {
-        validated = validated and string_in_list(request.data.custom_metadata.type, [ "db", "api key", "tls", "token", "jwt", "key" ])
+        validated = string_in_list(request.data.custom_metadata.type, [ "db", "api key", "tls", "token", "jwt", "key" ], "type") and validated
     }
     if custom_metadata_has_field("privileged") {
-        validated = validated and string_in_list(request.data.custom_metadata.privileged, [ "yes", "no" ])
+        validated = string_in_list(request.data.custom_metadata.privileged, [ "yes", "no" ], "privileged") and validated
     }
     if custom_metadata_has_field("contact") {
-        validated = validated and string_matches_regex(request.data.custom_metadata.contact, "(\\W|^)[\\w.\\-]{0,25}@bmo\\.com(\\W|$)")
+        validated = string_matches_regex(request.data.custom_metadata.contact, "(\\W|^)[\\w.\\-]{0,25}@bmo\\.com(\\W|$)", "contact") and validated
     }
     if custom_metadata_has_field("expiry_date") {
-        validated = validated and string_matches_regex(request.data.custom_metadata.expiry_date, "^(0[1-9]|1[1,2])(\\/|-)(0[1-9]|[12][0-9]|3[01])(\\/|-)(20|21|22)\\d{2}$")
+        validated = string_matches_regex(request.data.custom_metadata.expiry_date, "^(0[1-9]|1[1,2])(\\/|-)(0[1-9]|[12][0-9]|3[01])(\\/|-)(20|21|22)\\d{2}$", "expiry_date") and validated
     }
     if validated {
         return true
@@ -63,17 +71,14 @@ validate_all = func() {
     }
 }
 
-# validation result used in our main rule
-validation_result = validate_all()
-
 # Only care about create, update, and delete operations against kv metadata paths that include custom_metadata
 precond = rule {
-    request.operation in ["create", "update", "delete"] and
+    request.operation in ["create", "update"] and
     strings.has_prefix(request.path, "kv/metadata/") and
-    request.data.custom_metadata is defined
+    "custom_metadata" in keys(request.data)
 }
 
 # Main policy evaluation
 main = rule when precond {
-    validation_result is true
+    validate_all()
 }
