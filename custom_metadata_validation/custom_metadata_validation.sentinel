@@ -8,6 +8,7 @@ string_in_list = func(str, list, field_name) {
                 return true
             } else {
                 print("***** ", field_name, " validation failed because \"", str, "\" was not found in list: ", list, " *****")
+                return false
             }
         } else {
             error("string_in_list argument \"list\" is empty or unset!")
@@ -26,6 +27,7 @@ string_matches_regex = func(str, regex, field_name) {
                 return true
             } else {
                 print("***** ", field_name, " validation failed because \"", str, "\" does not match regex: ", regex, " *****")
+                return false
             }
         } else {
             error("string_in_list argument \"list\" is empty or unset!")
@@ -48,9 +50,26 @@ custom_metadata_has_field = func(field) {
     return false
 }
 
+# Function to only allow a certain set of fields in custom_metadata
+only_allow_fields = func(field_names) {
+    validated = true
+    if "custom_metadata" in keys(request.data) and length(request.data.custom_metadata else 0) > 0 {
+        for request.data.custom_metadata as key, val {
+            if key not in field_names {
+                print("***** ", key, " not allowed in custom_metadata, allowed keys:", field_names, " *****")
+                validated = false
+            }
+        }
+    }
+    return validated
+}
+
 # Function to validate all the custom_metadata fields we care about
 validate_all = func() {
     validated = true
+    if not only_allow_fields(["notes", "type", "privileged", "contact", "expiry_date"]) {
+        validated = false
+    }
     if custom_metadata_has_field("type") {
         validated = string_in_list(request.data.custom_metadata.type, [ "db", "api key", "tls", "token", "jwt", "key" ], "type") and validated
     }
@@ -58,7 +77,7 @@ validate_all = func() {
         validated = string_in_list(request.data.custom_metadata.privileged, [ "yes", "no" ], "privileged") and validated
     }
     if custom_metadata_has_field("contact") {
-        validated = string_matches_regex(request.data.custom_metadata.contact, "(\\W|^)[\\w.\\-]{0,25}@bmo\\.com(\\W|$)", "contact") and validated
+        validated = string_matches_regex(request.data.custom_metadata.contact, "(\\W|^)[\\w.\\-]{0,25}@(domain|otherdomain)\\.com(\\W|$)", "contact") and validated
     }
     if custom_metadata_has_field("expiry_date") {
         validated = string_matches_regex(request.data.custom_metadata.expiry_date, "^(0[1-9]|1[1,2])(\\/|-)(0[1-9]|[12][0-9]|3[01])(\\/|-)(20|21|22)\\d{2}$", "expiry_date") and validated
@@ -66,7 +85,7 @@ validate_all = func() {
     if validated {
         return true
     } else {
-        print ("Custom Metadata validation failed. See http://wiki.bmo.net/custom_metadata_article for more details.")
+        print ("Custom Metadata validation failed. See http://wiki.bmo.net/custom_metadata_article for more details. *****")
         return false
     }
 }
