@@ -45,7 +45,7 @@
         "custom_metadata": {
           "type": "tls",
           "privileged": "yes",
-          "contact": "team_email@bmo.com",
+          "contact": "team_email@otherdomain.com",
           "expiry_date": "11/09/2023",
           "notes": "this is just a dummy cert for testing"
         }
