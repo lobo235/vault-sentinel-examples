@@ -85,7 +85,7 @@ validate_all = func() {
     if validated {
         return true
     } else {
-        print ("Custom Metadata validation failed. See http://wiki.bmo.net/custom_metadata_article for more details. *****")
+        print ("Custom Metadata validation failed. See http://wiki.domain.net/custom_metadata_article for more details. *****")
         return false
     }
 }
